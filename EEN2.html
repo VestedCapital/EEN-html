@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /> 
+      <style>
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --animation-name: none;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  font-family: "Times New Roman", Times, serif;
+}
+
+.card {
+  font-size: 20px;
+  font-weight: bold;
+  margin: 10px 10px;
+  width: 320px;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  border-radius: 50px;
+  background-color: #ffffff;
+  padding: 10px;
+}
+
+.stacked-transactions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 15px;
+}
+
+.graph {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.button {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: center;
+  padding: 10px;
+}
+
+.button-text {
+  font-size: 18px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: center;
+  padding: 10px;
+}
+
+.semi-donut {
+  --percentage: 0;
+  --fill: #ff0;
+  position: relative;
+  height: 100px;
+  width: 200px;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 600;
+  overflow: hidden;
+  color: var(--fill);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.semi-donut:after {
+  content: "";
+  width: 200px;
+  height: 200px;
+  border: 30px solid;
+  border-color: rgba(0, 0, 0, 0.767) rgba(0, 0, 0, 0.767) var(--fill) var(--fill);
+  position: absolute;
+  border-radius: 50%;
+  left: 0;
+  top: 0;
+  box-sizing: border-box;
+  transform: rotate(calc(1deg * (-45 + var(--percentage) * 1.8)));
+  animation: var(--animation-name) 1s ease-in-out;
+}
+
+.margin {
+  margin: 25px;
+}
+
+@keyframes fillAnimation {
+  0% {
+    transform: rotate(-45deg);
+  }
+
+  50% {
+    transform: rotate(135deg);
+  }
+}
+
+@keyframes fillGraphAnimation {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  50% {
+    transform: rotate(180deg);
+  }
+}
+
+.button-text-p {
+  transition: 0.3s;
+}
+
+.button-text-p:hover {
+  color: #ff3d00;
+}
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  box-shadow: 0px 2px 21px -8px rgba(0, 0, 0, 0.75);
+  -webkit-box-shadow: 0px 2px 21px -8px rgba(0, 0, 0, 0.75);
+  -moz-box-shadow: 0px 2px 21px -8px rgba(0, 0, 0, 0.75);
+  transition: 200ms ease-in-out;
+  border-radius: 10px;
+  z-index: 10;
+  background-color: white;
+  width: 600px;
+  max-width: 90%;
+}
+
+.modal.active {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.modal-header {
+  padding: 10px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header .title {
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.modal-header .close-button {
+  cursor: pointer;
+  border: none;
+  outline: none;
+  background: none;
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.modal-body {
+  padding: 10px 15px;
+  word-break: break-all;
+}
+
+.modal-body p {
+  font-size: min(4vw, 16px);
+}
+
+.modal-body-qr {
+  padding: 0;
+}
+
+#overlay {
+  position: fixed;
+  opacity: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transition: 200ms ease-in-out;
+  background-color: rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+#overlay.active {
+  pointer-events: all;
+  opacity: 1;
+}
+
+.qr-code-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.copy-to-clipboard-btn {
+  border: 1px solid #ff3d00;
+  padding: 10px;
+  color: white;
+  border-radius: 20px;
+  background-color: #ff3d00;
+  transition: 200ms ease-in-out;
+}
+
+.copy-to-clipboard-btn:hover {
+  background-color: #ffffff;
+  border: 1px solid #ff3d00;
+  color: #ff3d00;
+}
+
+.copy-to-clipboard-text {
+  display: none;
+  color: green;
+  font-weight: bold;
+  transition: 300ms ease-in-out;
+}
+
+.header-text {
+  padding: 10px;
+  transition: 200ms ease-in-out;
+  cursor: pointer;
+}
+
+.header-text:hover {
+  padding: 10px;
+  color: #ff3d00;
+}
+    </style>
+    <title>EEN2</title>
+  </head>
+  <body>
+    <div class="card">
+      <legend class="header-text" onclick="gotoURL()">Elite Edge Node 2</legend>
+      <div class="stacked-transactions">
+        <p>Stacked Transaction</p>
+        <p id="numberOfTransactions" style="font-size: 23px; color: #ff3d00">
+          0
+        </p>
+      </div>
+      <div class="graph">
+        <div
+          id="chart"
+          class="semi-donut margin"
+          style="--percentage: 0; --fill: #ff3d00"
+        >
+          <span style="color: black"></span>
+        </div>
+      </div>
+      <div class="stacked-transactions">
+        <p>Remaining Balance:</p>
+        <p id="balance" style="font-size: 23px; color: #ff3d00">0</p>
+      </div>
+      <div class="button">
+        <img
+          data-modal-target="#modal-summary-key"
+          style="margin-right: 10px; cursor: pointer"
+          src="https://raw.githubusercontent.com/VestedCapital/EEN-Misc/main/Key%20for%20Summary%20Key.png"
+          height="80"
+          width="120"
+        />
+
+        <img
+          data-modal-target="#modal-qr-code"
+          src="https://raw.githubusercontent.com/VestedCapital/EEN-Misc/main/Phone%20for%20QR%20code.png"
+          style="margin-right: 6px; cursor: pointer"
+          height="120"
+          width="120"
+        />
+      </div>
+      <div class="button-text">
+        <p
+          data-modal-target="#modal-summary-key"
+          style="margin-left: -20px; cursor: pointer"
+          class="button-text-p"
+        >
+          Summary Key
+        </p>
+        <p
+          data-modal-target="#modal-qr-code"
+          style="margin-left: 30px; cursor: pointer"
+          class="button-text-p"
+        >
+          QR Code
+        </p>
+      </div>
+    </div>
+    <div class="modal" id="modal-summary-key">
+      <div class="modal-header">
+        <div class="title"></div>
+        <button data-close-button class="close-button">&times;</button>
+      </div>
+      <div class="modal-body">
+        <center>
+          <div>
+            <img
+              src="https://raw.githubusercontent.com/VestedCapital/EEN-Misc/main/Key%20for%20Summary%20Key.png"
+              alt="summary-key-logo"
+              height="48px"
+              width="70px"
+            />
+            <p style="font-weight: bold">Summary Key</p>
+          </div>
+        </center>
+        <p style="text-align: center" id="summary-key">
+          0x71a5D4d8452d5e94d60f6F0cDCD9d51EdE30e051924640eb9d77243610909d6a5b0e5bdda0377e8031607f9a90cbf7e0d6a9e8f432b41551447fc03f5fe2772477c14bfea7969a38b416892ee2c8cedb298a27ca1e54ab121d93b990f64bf39fbfc9dac7aa34d1b46626bf697e226c28a6fdc0fb0591494f27f84ae3d72920773de2cea49fcff0511153949b06261675b881710615553e3bdb86d419e042a72c0587ed58555373156563d8051f63c2e74d315b41eded63ad6bb8392b97ebcf5eb8e7fbbb4dcb63bb61ea94224b0fbae0d3fa3d54b50e731f8c1c40706f07dfeb3c6c312101930ae570635f48e037429151390d4ac5559d8c7b6d91ca127fcd9c20a46557ca
+        </p>
+        <center>
+          <p id="copy-to-clipboard-text" class="copy-to-clipboard-text">Summary key copied!</p>
+          <button class="copy-to-clipboard-btn" onclick="CopyToClipboard()">
+            Copy to Clipboard
+          </button>
+        </center>
+      </div>
+    </div>
+    <div class="modal" style="width: 300px" id="modal-qr-code">
+      <div class="modal-header">
+        <div class="title"></div>
+        <button data-close-button class="close-button">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="qr-code-body">
+          <img src="https://raw.githubusercontent.com/VestedCapital/QR-Code/main/EEN2.png" style="width: 100%" />
+          <div>
+            <p style="font-size: 23px; font-weight: bold">Scan QR Code</p>
+            <center>
+              <img
+                src="https://raw.githubusercontent.com/VestedCapital/EEN-Misc/main/qr-code-scan.svg"
+                alt="qr-code-logo"
+                width="48px"
+                height="48px"
+              />
+            </center>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="overlay"></div>
+  </body>
+  <script>
+    //POP UP SCRIPTS
+const openModalButtons = document.querySelectorAll("[data-modal-target]");
+const closeModalButtons = document.querySelectorAll("[data-close-button]");
+const overlay = document.getElementById("overlay");
+
+openModalButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    const modal = document.querySelector(button.dataset.modalTarget);
+    openModal(modal);
+  });
+});
+
+closeModalButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    //Will select nearest parent element having modal class
+    const modal = button.closest(".modal");
+    closeModal(modal);
+    document.getElementById('copy-to-clipboard-text').style.display='none'
+  });
+});
+
+overlay.addEventListener("click", () => {
+  const modals = document.querySelectorAll(".modal.active");
+  modals.forEach((modal) => {
+    closeModal(modal);
+  });
+});
+
+const openModal = (modal) => {
+  if (modal == null) return;
+  modal.classList.add("active");
+  overlay.classList.add("active");
+};
+
+const closeModal = (modal) => {
+  if (modal == null) return;
+  modal.classList.remove("active");
+  overlay.classList.remove("active");
+};
+
+function CopyToClipboard() {
+  var text = document.getElementById("summary-key").innerText;
+  var elem = document.createElement("textarea");
+  document.body.appendChild(elem);
+  elem.value = text;
+  elem.select();
+  document.execCommand("copy");
+  document.body.removeChild(elem);
+  document.getElementById('copy-to-clipboard-text').style.display='block'
+}
+
+//API
+
+function FormatNumberLength(num, length) {
+  var r = "" + num;
+  while (r.length < length) {
+    r = "0" + r;
+  }
+  return r;
+}
+
+function numberWithCommas(x) {
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+async function fetchData() {
+  const response = await fetch(
+    `https://explorer.thetatoken.org:8443/api/stake/0x71a5d4d8452d5e94d60f6f0cdcd9d51ede30e051?types[]=vcp&types[]=gcp&types[]=eenp`
+  );
+  const data = await response.json();
+  console.log(data);
+  return data;
+}
+let mp;
+fetchData().then((dataBlocks) => {
+  console.log(dataBlocks.body.holderRecords.length);
+  let totalAmount = 0.0;
+  dataBlocks.body.holderRecords.map((record) => {
+    totalAmount = totalAmount + parseFloat(record.amount);
+  });
+  let totalAmount_numbers = ((500000)-totalAmount / 1000000000000000000).toFixed(0);
+  let totalAmount_numbers1=(totalAmount/1000000000000000000).toFixed(0);
+  let percentage = Math.round((totalAmount_numbers1 / 500000) * 100);
+  console.log("percentage", percentage);
+  totalAmount = numberWithCommas(
+    ((500000)-totalAmount / 1000000000000000000).toFixed(0)
+  );
+  console.log("TotalAmount", totalAmount);
+
+  if (totalAmount_numbers1 >= 490001 && totalAmount_numbers1 <= 500000) {
+    document.getElementById("balance").innerText = "Full";
+  } else {
+    document.getElementById("balance").innerText = totalAmount;
+  }
+  document.getElementById(
+    "chart"
+  ).style = `--percentage: ${percentage}; --fill: #ff3d00;`;
+  document.getElementById(
+    "chart"
+  ).firstElementChild.innerText = `${percentage}%`;
+
+  document.documentElement.style.setProperty(
+    "--animation-name",
+    "fillAnimation"
+  );
+
+  document.getElementById("numberOfTransactions").innerText =
+    dataBlocks.body.holderRecords.length;
+});
+
+function gotoURL(){
+  window.location.href="https://explorer.thetatoken.org/account/0x71a5d4d8452d5e94d60f6f0cdcd9d51ede30e051"
+}
+  </script>
+</html>
